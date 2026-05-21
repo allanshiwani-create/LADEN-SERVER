@@ -54,20 +54,34 @@ app.post('/scan-text', async (req, res) => {
 app.post('/scan-image', async (req, res) => {
   try {
     const { base64, mimeType } = req.body;
-    console.log('Scanning image, size:', base64?.length);
+    
+    // Detect actual image type from base64
+    let actualMime = 'image/jpeg';
+    if (base64.startsWith('/9j/')) actualMime = 'image/jpeg';
+    else if (base64.startsWith('iVBOR')) actualMime = 'image/png';
+    else if (base64.startsWith('R0lGO')) actualMime = 'image/gif';
+    else if (base64.startsWith('UklGR')) actualMime = 'image/webp';
+    
+    console.log('Scanning image, size:', base64?.length, 'mime:', actualMime);
+    
+    // Check size - Anthropic max is 5MB base64
+    if (base64.length > 6800000) {
+      return res.status(400).json({ error: 'Image too large. Please use a smaller photo.' });
+    }
+    
     const parsed = await callAnthropic([{
       role: 'user',
       content: [
-        {
-          type: 'image',
-          source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: base64 }
-        },
-        {
-          type: 'text',
-          text: 'Read the workout on this gym whiteboard. Return ONLY a valid JSON object, no other text, no markdown, no backticks:\n{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null}],"timecap":null,"rounds":null,"notes":null}\n\nIf no workout is visible, return: {"error":"No workout found"}'
-        }
+        { type: 'image', source: { type: 'base64', media_type: actualMime, data: base64 } },
+        { type: 'text', text: 'Read the workout on this gym whiteboard. Return ONLY a valid JSON object, no other text, no markdown, no backticks:\n{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null}],"timecap":null,"rounds":null,"notes":null}\n\nIf no workout is visible, return: {"error":"No workout found"}' }
       ]
     }]);
+    res.json(parsed);
+  } catch (e) {
+    console.error('scan-image error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
     res.json(parsed);
   } catch (e) {
     console.error('scan-image error:', e.message);
