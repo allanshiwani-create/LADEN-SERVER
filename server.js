@@ -55,12 +55,14 @@ app.post('/scan-image', async (req, res) => {
   try {
     const { base64, mimeType } = req.body;
     
-    // Detect actual image type from base64
-    let actualMime = 'image/jpeg';
-    if (base64.startsWith('/9j/')) actualMime = 'image/jpeg';
-    else if (base64.startsWith('iVBOR')) actualMime = 'image/png';
-    else if (base64.startsWith('R0lGO')) actualMime = 'image/gif';
-    else if (base64.startsWith('UklGR')) actualMime = 'image/webp';
+// Detect actual image type from base64 header bytes
+let actualMime = 'image/png';
+const header = Buffer.from(base64.substring(0, 16), 'base64');
+if (header[0] === 0xFF && header[1] === 0xD8) actualMime = 'image/jpeg';
+else if (header[0] === 0x89 && header[1] === 0x50) actualMime = 'image/png';
+else if (header[0] === 0x47 && header[1] === 0x49) actualMime = 'image/gif';
+else if (header[0] === 0x52 && header[1] === 0x49) actualMime = 'image/webp';
+console.log('Detected mime:', actualMime, 'header bytes:', header[0], header[1]);
     
     console.log('Scanning image, size:', base64?.length, 'mime:', actualMime);
     
