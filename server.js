@@ -29,7 +29,7 @@ app.post('/scan-text', async (req, res) => {
         max_tokens: 1000,
         messages: [{
           role: 'user',
-          content: `You are reading a gym workout. Return ONLY a valid JSON object, no other text, no markdown, no backticks:\n{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null}],"timecap":null,"rounds":null,"notes":null}\n\nWorkout:\n${text}`
+          content: `You are reading a gym workout. Return ONLY a valid JSON object, no other text, no markdown, no backticks:\n{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null},{"name":"Push-ups","reps":"15","weight":null},{"name":"Air Squats","reps":"20","weight":null},{"name":"Box Jumps","reps":"10","weight":"60cm"}],"timecap":"20 min","rounds":"5","notes":"Rest 1 min between rounds"}
         }]
       })
     });
