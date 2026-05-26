@@ -13,7 +13,11 @@ app.use((req, res, next) => {
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
-app.post('/scan-text', async (req, res) => {"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null},{"name":"Push-ups","reps":"15","weight":null},{"name":"Air Squats","reps":"20","weight":null},{"name":"Box Jumps","reps":"10","weight":"60cm"}],"timecap":"20 min","rounds":"5","notes":"Rest 1 min between rounds"}
+const PROMPT_SUFFIX = `Return ONLY a valid JSON object with ALL exercises, no other text, no markdown, no backticks. Example format:
+{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null},{"name":"Push-ups","reps":"15","weight":null},{"name":"Air Squats","reps":"20","weight":null},{"name":"Box Jumps","reps":"10","weight":"60cm"}],"timecap":"20 min","rounds":"5","notes":"any extra notes"}
+Extract EVERY exercise you see. Do not skip any.`;
+
+app.post('/scan-text', async (req, res) => {
   try {
     const { text } = req.body;
     console.log('Scanning text:', text?.substring(0, 80));
@@ -29,7 +33,7 @@ app.post('/scan-text', async (req, res) => {"type":"CROSSFIT","title":"workout n
         max_tokens: 1000,
         messages: [{
           role: 'user',
-          content: `You are reading a gym workout. Return ONLY a valid JSON object, no other text, no markdown, no backticks:\n{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null},{"name":"Push-ups","reps":"15","weight":null},{"name":"Air Squats","reps":"20","weight":null},{"name":"Box Jumps","reps":"10","weight":"60cm"}],"timecap":"20 min","rounds":"5","notes":"Rest 1 min between rounds"}
+          content: `You are reading a gym workout. ${PROMPT_SUFFIX}\n\nWorkout:\n${text}`
         }]
       })
     });
@@ -50,7 +54,6 @@ app.post('/scan-image', async (req, res) => {
     const { base64 } = req.body;
     console.log('Scanning image, size:', base64?.length);
 
-    // Detect mime type from base64
     let mime = 'image/jpeg';
     if (base64 && base64.length > 4) {
       const bytes = Buffer.from(base64.substring(0, 12), 'base64');
@@ -83,7 +86,7 @@ app.post('/scan-image', async (req, res) => {
             },
             {
               type: 'text',
-              text: 'Read the workout written on this gym whiteboard or billboard. Return ONLY a valid JSON object, no other text, no markdown, no backticks:\n{"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null}],"timecap":null,"rounds":null,"notes":null}\n\nIf no workout text is visible return: {"error":"No workout found"}'
+              text: `Read ALL the workout exercises written on this gym whiteboard or billboard. ${PROMPT_SUFFIX}\n\nIf no workout text is visible return: {"error":"No workout found"}`
             }
           ]
         }]
@@ -102,7 +105,7 @@ app.post('/scan-image', async (req, res) => {
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok', key: !!API_KEY }));
-app.get('/', (req, res) => res.json({ status: 'LADEN server v3' }));
+app.get('/', (req, res) => res.json({ status: 'LADEN server v4' }));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log('LADEN server on port', PORT));
