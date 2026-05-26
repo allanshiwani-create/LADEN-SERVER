@@ -13,7 +13,7 @@ app.use((req, res, next) => {
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
-app.post('/scan-text', async (req, res) => {
+app.post('/scan-text', async (req, res) => {"type":"CROSSFIT","title":"workout name","exercises":[{"name":"Pull-ups","reps":"10","weight":null},{"name":"Push-ups","reps":"15","weight":null},{"name":"Air Squats","reps":"20","weight":null},{"name":"Box Jumps","reps":"10","weight":"60cm"}],"timecap":"20 min","rounds":"5","notes":"Rest 1 min between rounds"}
   try {
     const { text } = req.body;
     console.log('Scanning text:', text?.substring(0, 80));
